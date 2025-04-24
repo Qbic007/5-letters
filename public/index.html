@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Слово дня</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Слово дня</h1>
+        <div id="date" class="date">Загрузка...</div>
+        <div id="word" class="word">Загрузка...</div>
+    </div>
+    <script>
+        async function updateWord() {
+            try {
+                const response = await fetch('/api/word');
+                const data = await response.json();
+                document.getElementById('date').textContent = data.date || 'Дата не найдена';
+                document.getElementById('word').textContent = data.word || 'Слово не найдено';
+            } catch (error) {
+                console.error('Ошибка при получении слова:', error);
+                document.getElementById('date').textContent = 'Ошибка загрузки';
+                document.getElementById('word').textContent = 'Ошибка загрузки';
+            }
+        }
+
+        // Обновляем слово при загрузке страницы
+        updateWord();
+        
+        // Обновляем слово каждую минуту
+        setInterval(updateWord, 60000);
+    </script>
+</body>
+</html> 
