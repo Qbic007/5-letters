@@ -7,7 +7,16 @@ const TelegramBot = require('node-telegram-bot-api');
 require('dotenv').config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
+// Проверка обязательных переменных окружения
+const requiredEnvVars = ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+    console.error('Ошибка: Отсутствуют обязательные переменные окружения:', missingEnvVars.join(', '));
+    process.exit(1);
+}
 
 // Токен бота
 const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -32,7 +41,11 @@ async function sendTelegramMessage(message) {
         await bot.sendMessage(chatId, message);
         console.log('Сообщение отправлено в Telegram');
     } catch (error) {
-        console.error('Ошибка при отправке сообщения в Telegram:', error);
+        console.error('Ошибка при отправке сообщения в Telegram:', error.message);
+        if (error.response) {
+            console.error('Статус ответа:', error.response.status);
+            console.error('Данные ответа:', error.response.data);
+        }
     }
 }
 
@@ -147,8 +160,31 @@ app.get('/api/word', (req, res) => {
     res.json(currentData);
 });
 
+// Обработка ошибок
+app.use((err, req, res, next) => {
+    console.error('Ошибка сервера:', err);
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('Получен сигнал SIGTERM. Завершаем работу...');
+    server.close(() => {
+        console.log('Сервер остановлен');
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('Получен сигнал SIGINT. Завершаем работу...');
+    server.close(() => {
+        console.log('Сервер остановлен');
+        process.exit(0);
+    });
+});
+
 // Запускаем сервер
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Сервер запущен на порту ${PORT}`);
     // Получаем слово при старте и отправляем сообщение
     fetchWord().then(() => {
