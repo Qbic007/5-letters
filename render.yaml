@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: 5-letters
+    env: node
+    buildCommand: npm install
+    startCommand: yarn start
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+    plan: free 
